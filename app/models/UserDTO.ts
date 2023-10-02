@@ -1,4 +1,4 @@
-export class User {
+export class UserDTO {
 
     private password?: string;
     private accessToken: string;
@@ -7,7 +7,7 @@ export class User {
         private email: string
     ) {}
 
-    public fill(data: Object): User {
+    public fill(data: Object): UserDTO {
         Object.entries(data).forEach(([key, value]: [string, unknown]) => {
             if (this.hasOwnProperty(key)) {
                 this[key] ??= value;

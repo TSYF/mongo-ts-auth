@@ -1,7 +1,7 @@
 import { Auth, UserCredential, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/firebase";
-import { User } from "../models/User";
-import { User as FBUser } from 'firebase/auth';
+import { UserDTO } from "../models/UserDTO";
+import { User } from 'firebase/auth';
 
 export class AuthController {
     
@@ -9,14 +9,14 @@ export class AuthController {
         private auth: Auth,
     ) {}
 
-    public getUser(): FBUser | null {
+    public getUser(): User | null {
         return this.auth.currentUser;
     }
 
-    public async signInWithEmailAndPassword(user: User): Promise<Object> {
+    public async signInWithEmailAndPassword(user: UserDTO): Promise<Object> {
         const { user: fbUser } = await signInWithEmailAndPassword(this.auth, user.getEmail(), user.getPassword());
 
-        const newUser = new User("" + fbUser.email);
+        const newUser = new UserDTO("" + fbUser.email);
         newUser.fill(fbUser);
 
         return newUser;
