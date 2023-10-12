@@ -1,6 +1,6 @@
 import { Auth, UserCredential, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/firebase";
-import { UserDTO } from "../models/UserDTO";
+import { IUser } from "../interfaces/IUser";
 import { User } from 'firebase/auth';
 
 export class AuthController {
@@ -9,16 +9,25 @@ export class AuthController {
         private auth: Auth,
     ) {}
 
-    public getUser(): User | null {
-        return this.auth.currentUser;
+    public getUser(): IUser | false {
+        const { currentUser } = this.auth;
+        
+        if (currentUser) {
+
+            const { email } = currentUser;
+            
+            return <IUser>{ email };
+        } else {
+            return false;
+        }
+
     }
 
-    public async signInWithEmailAndPassword(user: UserDTO): Promise<Object> {
-        const { user: fbUser } = await signInWithEmailAndPassword(this.auth, user.getEmail(), user.getPassword());
+    public async signInWithEmailAndPassword(user: IUser): Promise<string> {
+        const { user: fbUser } = await signInWithEmailAndPassword(this.auth, user.email, user.password!);
 
-        const newUser = new UserDTO("" + fbUser.email);
-        newUser.fill(fbUser);
+        const token = fbUser.getIdToken();
 
-        return newUser;
+        return token;
     }
 }
