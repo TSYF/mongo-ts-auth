@@ -1,26 +1,35 @@
 import { Request, Response, Router } from 'express';
-import { auth } from '../firebase/firebase'
+import { auth } from '../firebase/firebase';
+import { auth as adminAuth } from '../firebase/firebaseAdmin';
 import { AuthController } from '../controllers/AuthController';
 
 const router = Router();
 
 router.get("", async (req: Request, res: Response) => {
-    const userController = new AuthController(auth);
+    const authController = new AuthController(adminAuth);
     
-    const user = userController.getUser();
-
-    if (user) {
-        res.send({
-            status: "success",
-            data: {
-                user
-            }
-        });
-    } else {
-        res.status(404).send({
+    try {
+        
+        const user = await authController.getUser(req);
+    
+        if (user) {
+            res.send({
+                status: "success",
+                data: {
+                    user
+                }
+            });
+        } else {
+            res.status(404).send({
+                status: "fail",
+                message: "Usuario no está autenticado"
+            });
+        }
+    } catch (error) {
+        res.status(500).send({
             status: "fail",
-            message: "Usuario no está autenticado"
-        })
+            message: "Error obteniendo el usuario"
+        });
     }
 });
 
@@ -47,7 +56,19 @@ router.post("/signIn", async (req: Request, res: Response) => {
         data: {
             token
         }
-    })
+    });
+});
+
+router.post("/signOut", async (req: Request, res: Response) => {
+    const authController = new AuthController(auth);
+    authController.signOut();
+
+    res.status(200).send({
+        status: "success",
+        data: {
+            message: "Cierre de sesión completado"
+        }
+    });
 });
 
 
