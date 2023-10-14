@@ -1,0 +1,10 @@
+version: '3.7'
+
+services:
+  ms-firebase-auth-amb:
+    build:
+      context: .
+    container_name: ms-firebase-auth-amb
+    ports:
+      - '8000:8000'
+    command: bun app.ts

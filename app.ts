@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import express from "express";
 import { authRouter } from './app/routers/authRouter';
 const morgan = require("morgan");
@@ -12,6 +11,6 @@ app.use(morgan("combined"));
 app.use("/auth", authRouter);
 
 
-app.listen(4201, () => {
+app.listen(process.env.PORT, () => {
     console.log("LISTENING");
 })
