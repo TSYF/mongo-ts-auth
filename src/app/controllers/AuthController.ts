@@ -1,24 +1,25 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { UserDTO } from "../DTO/UserDTO";
-import { Either, isLeft, left, right } from "../utils/either";
+import { right } from "../utils/either";
 import { Request } from "express";
 import { Auth as AdminAuth } from "firebase-admin/auth";
 import { Auth } from "firebase/auth";
 import { UserEither, cExists, cGetToken, cHasBearer, cVerifyToken, createUser, signIn, verifyToken } from "../utils/eitherUtils";
-import { compose, curry } from "../utils/functionalUtils";
+import { compose } from "../utils/functionalUtils";
+import { ErrorMessages } from "../interfaces/ErrorMessages";
 // import { refreshToken as fbRefreshToken } from "firebase-admin/app";
 
 export class AuthController {
 
     private readonly TOKEN_KEYWORD = "Bearer ";
-    private errorMessages = {
-        "auth/missing-password": "Falta Contraseña",
-        "auth/invalid-email": "Email Inválido",
-        "auth/user-not-found": "Usuario no Existe",
-        "auth/wrong-password": "Contraseña Incorrecta",
-        "auth/email-already-in-use": "Email ya está en uso",
+    private errorMessages: ErrorMessages = {
+        "auth/missing-password"     : "Falta Contraseña",
+        "auth/invalid-email"        : "Email Inválido",
+        "auth/user-not-found"       : "Usuario no Existe",
+        "auth/wrong-password"       : "Contraseña Incorrecta",
+        "auth/email-already-in-use" : "Email ya está en uso",
         "auth/operation-not-allowed": "Operación no Permitida",
-        "auth/weak-password": "Contraseña Débil"
+        "auth/weak-password"        : "Contraseña Débil"
     };
     
     public constructor(
