@@ -1,11 +1,16 @@
+interface Wrapper<A> {
+    readonly _tag: string;
+    readonly [val: string]: A | string;
+}
+
 export type Either<E, A> = Left<E> | Right<A>;
 
-export interface Left<E> {
+export interface Left<E> extends Wrapper<E> {
     readonly _tag: "Left";
     readonly left: E;
 }
 
-export interface Right<A> {
+export interface Right<A> extends Wrapper<A> {
     readonly _tag: "Right";
     readonly right: A;
 }
@@ -14,6 +19,7 @@ export const left = <E, A=never>(error: E): Either<E, A> => ({ _tag: "Left", lef
 export const right = <A, E=never>(value: A): Either<E, A> => ({ _tag: "Right", right: value })
 
 export const isLeft = <E, A>(x: Either<E, A>): x is Left<E> => x._tag === "Left";
+export const isRight = <E, A>(x: Either<E, A>): x is Right<A> => x._tag === "Right";
 
 export type Match = <E, A, B>(onLeft: (e: E) => B, onRight: (a: A) => B)
     => (x: Either<E, A>) => B;
