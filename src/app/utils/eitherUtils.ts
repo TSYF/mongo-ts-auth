@@ -33,8 +33,8 @@ export const verifyToken: VerifyToken = (auth, errorMessages, header) => match(
         try {
             const { uid, email } = await auth.verifyIdToken(value);
             return right(new UserDTO(uid, email));
-        } catch (error) {
-            return left(errorMessages[error.code] ?? error.message);
+        } catch ({ code, message }) {
+            return left(errorMessages[code] ?? message);
         }
     }
 )(header)
@@ -53,8 +53,8 @@ export const signIn: SignIn = (auth, errorMessages, user) => match(
                 buildUser("email", fbUser.email!)
             )(new UserDTO());
             return right(returnedUser);
-        } catch (error) {
-            return left(errorMessages[error.code] ?? error.message);
+        } catch ({ code, message }) {
+            return left(errorMessages[code] ?? message);
         }
     }
 )(user)
@@ -74,8 +74,8 @@ export const createUser: CreateUser = (auth, errorMessages, user) => match(
                 buildUser("uid", uid),
             )(new UserDTO());
             return right(userDTO);
-        } catch (error) {
-            return left(errorMessages[error.code] ?? error.message);
+        } catch ({ code, message }) {
+            return left(errorMessages[code] ?? message);
         }
     }
 )(user)

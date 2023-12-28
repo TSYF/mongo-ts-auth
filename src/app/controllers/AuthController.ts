@@ -18,14 +18,15 @@ export class AuthController {
         "auth/wrong-password": "Contraseña Incorrecta",
         "auth/email-already-in-use": "Email ya está en uso",
         "auth/operation-not-allowed": "Operación no Permitida",
-        "auth/weak-password": "Contraseña Débil"
+        "auth/weak-password": "Contraseña Débil",
+        "auth/argument-error": "Decodificación de token fallida"
     };
     
     public constructor(
         private auth: AdminAuth | Auth,
     ) {}
 
-    public async getUser(request: Request): Promise<UserEither> {
+    public async getUser(request: Request | { headers: { authorization: string }}): Promise<UserEither> {
         const authorization = right(request.headers.authorization!)
         const auth = <AdminAuth>this.auth
         const kw = right(this.TOKEN_KEYWORD)
@@ -58,13 +59,13 @@ export class AuthController {
     //     }
     // }
     
-    public async signInWithEmailAndPassword(user: UserDTO): Promise<UserEither> {
+    public async signIn(user: UserDTO): Promise<UserEither> {
         const auth = <Auth>this.auth;
 
         return await signIn(auth, this.errorMessages, right(user))
     }
     
-    public async createUserWithEmailAndPassword(user: UserDTO): Promise<UserEither> {
+    public async createUser(user: UserDTO): Promise<UserEither> {
         const auth = <Auth>this.auth;
         
         return await createUser(auth, this.errorMessages, right(user))
