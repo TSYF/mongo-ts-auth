@@ -5,7 +5,11 @@ import { AuthController } from '../controllers/AuthController';
 import { isRight } from '../utils/either';
 import { UserDTO } from '../DTO/UserDTO';
 
-const router = Router();
+const router = Router({
+    // strict: true
+    // mergeParams: true
+    // caseSensitive: true
+});
 
 router.get("", async (req, res) => {
     const authController = new AuthController(adminAuth);
@@ -41,7 +45,7 @@ router.post("/signUp", async (req, res) => {
     const userSignIn = new UserDTO(undefined, email, password);
 
     const authController = new AuthController(auth);
-    const user = await authController.createUserWithEmailAndPassword(userSignIn);
+    const user = await authController.createUser(userSignIn);
 
     if (isRight(user)) {
 
@@ -66,7 +70,7 @@ router.post("/signIn", async (req, res) => {
     const userSignIn = new UserDTO(undefined, email, password);
 
     const authController = new AuthController(auth);
-    const user = await authController.signInWithEmailAndPassword(userSignIn);
+    const user = await authController.signIn(userSignIn);
 
     if (isRight(user)) {
 

@@ -4,6 +4,8 @@ import { compose, curry } from "./functionalUtils"
 import { UserDTO } from "../DTO/UserDTO"
 import { ErrorMessages } from "../interfaces/ErrorMessages"
 import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
+import jwt from "jsonwebtoken"
+import { v4 } from "uuid";
 
 export type TokenEither = Either<string, string>
 export type UserEither = Either<string, UserDTO>
@@ -59,17 +61,19 @@ export const signIn: SignIn = (auth, errorMessages, user) => match(
     }
 )(user)
 
-type CreateUser = (auth: Auth, errorMessages: ErrorMessages, user: UserEither) => Promise<UserEither>
+type CreateUser = (errorMessages: ErrorMessages, user: UserEither) => Promise<UserEither>
 export const createUser: CreateUser = (auth, errorMessages, user) => match(
     async (value: string) => left(value),
     async (value: UserDTO) => {
         try {
-            const { user: signedUser } = await createUserWithEmailAndPassword(auth, value.email!, value.password!);
-            const { uid, email, getIdToken, refreshToken } = signedUser;
-            const accessToken = await getIdToken()!;
+            // const { user: signedUser } = await createUserWithEmailAndPassword(auth, value.email!, value.password!);
+            // const { uid, email, getIdToken, refreshToken } = signedUser;
+
+            const uid = v4();
             const userDTO = compose(
                 buildUser("refreshToken", refreshToken!),
                 buildUser("accessToken", accessToken),
+                buildUser("image", image!),
                 buildUser("email", email!),
                 buildUser("uid", uid),
             )(new UserDTO());
@@ -79,8 +83,6 @@ export const createUser: CreateUser = (auth, errorMessages, user) => match(
         }
     }
 )(user)
-
-
 
 const buildUser = curry((key: keyof UserDTO, value: UserDTO[keyof UserDTO], user: UserDTO): UserDTO => {
     const userDTO = { ...user };
