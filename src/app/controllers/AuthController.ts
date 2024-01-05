@@ -11,16 +11,16 @@ import { compose, curry } from "../utils/functionalUtils";
 export class AuthController {
 
     private readonly TOKEN_KEYWORD = "Bearer ";
-    private errorMessages = {
-        "auth/missing-password": "Falta Contraseña",
-        "auth/invalid-email": "Email Inválido",
-        "auth/user-not-found": "Usuario no Existe",
-        "auth/wrong-password": "Contraseña Incorrecta",
-        "auth/email-already-in-use": "Email ya está en uso",
-        "auth/operation-not-allowed": "Operación no Permitida",
-        "auth/weak-password": "Contraseña Débil",
-        "auth/argument-error": "Decodificación de token fallida"
-    };
+    // private errorMessages = {
+    //     "auth/missing-password": "Falta Contraseña",
+    //     "auth/invalid-email": "Email Inválido",
+    //     "auth/user-not-found": "Usuario no Existe",
+    //     "auth/wrong-password": "Contraseña Incorrecta",
+    //     "auth/email-already-in-use": "Email ya está en uso",
+    //     "auth/operation-not-allowed": "Operación no Permitida",
+    //     "auth/weak-password": "Contraseña Débil",
+    //     "auth/argument-error": "Decodificación de token fallida"
+    // };
     
     public constructor(
         private auth: AdminAuth | Auth,
@@ -32,7 +32,7 @@ export class AuthController {
         const kw = right(this.TOKEN_KEYWORD)
 
         return await compose(
-            cVerifyToken(auth, this.errorMessages),
+            cVerifyToken(),
             cGetToken(kw),
             cHasBearer(kw),
             cExists

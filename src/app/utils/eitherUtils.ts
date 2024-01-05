@@ -5,7 +5,10 @@ import { UserDTO } from "../DTO/UserDTO"
 import { ErrorMessages } from "../interfaces/ErrorMessages"
 import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
 import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
 import { v4 } from "uuid";
+import { readFileSync } from "fs"
+import { UserDAO } from "../model/UserDAO"
 
 export type TokenEither = Either<string, string>
 export type UserEither = Either<string, UserDTO>
@@ -28,61 +31,79 @@ export const getToken: GetToken = (keyword, header) => match(
     (value: string) => right(value.slice(keyword.length - 1))
 )(header)
 
-type VerifyToken = (auth: AdminAuth, errorMessages: ErrorMessages, header: TokenEither) => Promise<UserEither>
-export const verifyToken: VerifyToken = (auth, errorMessages, header) => match(
+type VerifyToken = (header: TokenEither) => Promise<UserEither>
+export const verifyToken: VerifyToken = (header) => match(
     async (value: string) => left(value),
     async (value: string) => {
         try {
-            const { uid, email } = await auth.verifyIdToken(value);
+            const key = readFileSync("../../keys/jwtRS256.key.pub", "utf8");
+            const { uid, email } = <UserDTO>jwt.verify(value, key, { algorithms: ["RS256"] });
             return right(new UserDTO(uid, email));
-        } catch ({ code, message }) {
-            return left(errorMessages[code] ?? message);
+        } catch ({ message }) {
+            return left(message);
         }
     }
 )(header)
 
 
-type SignIn = (auth: Auth, errorMessages: ErrorMessages, user: UserEither) => Promise<UserEither>
-export const signIn: SignIn = (auth, errorMessages, user) => match(
+type SignIn = (user: UserEither) => Promise<UserEither>
+export const signIn: SignIn = (user) => match(
     async (value: string) => left(value),
     async (value: UserDTO) => {
         try {
-            let { user: fbUser } = await signInWithEmailAndPassword(auth, value.email!, value.password!);
-            const token = await fbUser.getIdToken();
+
+            const { email, image } = user;
+            const key = readFileSync("../../src/keys/jwtRS256.key", "utf8");
+            const accessToken  = jwt.sign(user, key, { expiresIn: "30m", algorithm: "RS256" });
+            const refreshToken = jwt.sign(user, key, { expiresIn: "3h", algorithm: "RS256" });
+            
             const returnedUser = compose(
-                buildUser("refreshToken", fbUser.refreshToken!),
-                buildUser("accessToken", token),
-                buildUser("email", fbUser.email!)
+                buildUser("refreshToken", refreshToken),
+                buildUser("accessToken", accessToken),
+                buildUser("image", image),
+                buildUser("email", email)
             )(new UserDTO());
             return right(returnedUser);
-        } catch ({ code, message }) {
-            return left(errorMessages[code] ?? message);
+        } catch ({ message }) {
+            return left(message);
         }
     }
 )(user)
 
-type CreateUser = (errorMessages: ErrorMessages, user: UserEither) => Promise<UserEither>
-export const createUser: CreateUser = (auth, errorMessages, user) => match(
+type CreateUser = (user: UserEither) => Promise<UserEither>
+export const createUser: CreateUser = match(
     async (value: string) => left(value),
-    async (value: UserDTO) => {
+    async (user: UserDTO) => {
         try {
             // const { user: signedUser } = await createUserWithEmailAndPassword(auth, value.email!, value.password!);
             // const { uid, email, getIdToken, refreshToken } = signedUser;
 
-            const uid = v4();
+            user.uid = v4();
+            const { email, image } = user;
+
+            user.password = await bcrypt.hash(user.password!, 10);
+
+            const key = readFileSync("../../src/keys/jwtRS256.key", "utf8");
+            const accessToken  = jwt.sign(user, key, { expiresIn: "30m", algorithm: "RS256" });
+            const refreshToken = jwt.sign(user, key, { expiresIn: "3h", algorithm: "RS256" });
+            
+            UserDAO.addUser(user);
+
+            delete user.password;
+
             const userDTO = compose(
-                buildUser("refreshToken", refreshToken!),
+                buildUser("refreshToken", refreshToken),
                 buildUser("accessToken", accessToken),
                 buildUser("image", image!),
                 buildUser("email", email!),
-                buildUser("uid", uid),
+                buildUser("uid", user.uid),
             )(new UserDTO());
             return right(userDTO);
-        } catch ({ code, message }) {
-            return left(errorMessages[code] ?? message);
+        } catch ({message }) {
+            return left(message);
         }
     }
-)(user)
+)
 
 const buildUser = curry((key: keyof UserDTO, value: UserDTO[keyof UserDTO], user: UserDTO): UserDTO => {
     const userDTO = { ...user };

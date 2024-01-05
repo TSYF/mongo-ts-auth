@@ -1,10 +1,10 @@
 export class UserDTO {
     public constructor(
-        public readonly uid?: string,
-        public readonly email?: string,
-        public readonly password?: string,
-        public readonly accessToken?: string,
-        public readonly refreshToken?: string,
-        private readonly image?: string
+        public uid?: string,
+        public email?: string,
+        public password?: string,
+        public accessToken?: string,
+        public refreshToken?: string,
+        public image?: string
     ) {}
 }
