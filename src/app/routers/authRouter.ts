@@ -1,6 +1,4 @@
 import { Router } from 'express';
-import { auth } from '../firebase/firebase';
-import { auth as adminAuth } from '../firebase/firebaseAdmin';
 import { AuthController } from '../controllers/AuthController';
 import { isRight } from '../utils/either';
 import { UserDTO } from '../DTO/UserDTO';
@@ -12,11 +10,10 @@ const router = Router({
 });
 
 router.get("", async (req, res) => {
-    const authController = new AuthController(adminAuth);
     
     try {
         
-        const user = await authController.getUser(req);
+        const user = await AuthController.getUser(req);
     
         if (isRight(user)) {
             res.send({
@@ -44,8 +41,7 @@ router.post("/signUp", async (req, res) => {
 
     const userSignIn = new UserDTO(undefined, email, password);
 
-    const authController = new AuthController(auth);
-    const user = await authController.createUser(userSignIn);
+    const user = await AuthController.createUser(userSignIn);
 
     if (isRight(user)) {
 
@@ -69,8 +65,7 @@ router.post("/signIn", async (req, res) => {
 
     const userSignIn = new UserDTO(undefined, email, password);
 
-    const authController = new AuthController(auth);
-    const user = await authController.signIn(userSignIn);
+    const user = await AuthController.signIn(userSignIn);
 
     if (isRight(user)) {
 
@@ -93,10 +88,9 @@ router.post("/signIn", async (req, res) => {
 });
 
 router.post("token/verify", async (req, res) => {
-    const authController = new AuthController(adminAuth);
     const { token } = req.body;
 
-    const user = await authController.verify(token);
+    const user = await AuthController.verify(token);
     if (isRight(user)) {
         res.status(200).send({
             status: "success",
@@ -113,8 +107,7 @@ router.post("token/verify", async (req, res) => {
 });
 
 router.post("/signOut", async (req, res) => {
-    const authController = new AuthController(auth);
-    authController.signOut();
+    // AuthController.signOut();
 
     res.status(200).send({
         status: "success",

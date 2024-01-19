@@ -1,4 +1,4 @@
-export type ComposableFunction = (arg: any) => any;
+export type ComposableFunction = (...args: any) => any;
 function compose(...callbacks: ComposableFunction[]): ComposableFunction {
 
     if (callbacks.length === 0) {

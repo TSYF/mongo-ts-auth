@@ -1,10 +1,8 @@
-import { Auth as AdminAuth } from "firebase-admin/auth"
 import { Either, left, match, right } from "./either"
 import { compose, curry } from "./functionalUtils"
 import { UserDTO } from "../DTO/UserDTO"
 import { ErrorMessages } from "../interfaces/ErrorMessages"
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
-import jwt from "jsonwebtoken"
+import jwt, { Secret, SignOptions } from "jsonwebtoken"
 import bcrypt from "bcrypt"
 import { v4 } from "uuid";
 import { readFileSync } from "fs"
@@ -70,8 +68,10 @@ export const signIn: SignIn = (user) => match(
     }
 )(user)
 
-type CreateUser = (user: UserEither) => Promise<UserEither>
-export const createUser: CreateUser = match(
+type HashFunction    = (data: string | Buffer, saltOrRounds: string | number) => Promise<string>;
+type JWTSignFunction = (payload: string | Buffer | object, key: Secret, options?: SignOptions) => string;
+type CreateUser = (sign: JWTSignFunction, hash: HashFunction, user: UserEither) => Promise<UserEither>
+export const createUser: CreateUser = (sign, hash, user) => match(
     async (value: string) => left(value),
     async (user: UserDTO) => {
         try {
@@ -81,11 +81,11 @@ export const createUser: CreateUser = match(
             user.uid = v4();
             const { email, image } = user;
 
-            user.password = await bcrypt.hash(user.password!, 10);
+            user.password = await hash(user.password!, 10);
 
             const key = readFileSync("../../src/keys/jwtRS256.key", "utf8");
-            const accessToken  = jwt.sign(user, key, { expiresIn: "30m", algorithm: "RS256" });
-            const refreshToken = jwt.sign(user, key, { expiresIn: "3h", algorithm: "RS256" });
+            const accessToken  = sign({ user }, key, { expiresIn: "30m", algorithm: "RS256" });
+            const refreshToken = sign({ user }, key, { expiresIn: "3h", algorithm: "RS256" });
             
             UserDAO.addUser(user);
 
@@ -103,7 +103,7 @@ export const createUser: CreateUser = match(
             return left(message);
         }
     }
-)
+)(user)
 
 const buildUser = curry((key: keyof UserDTO, value: UserDTO[keyof UserDTO], user: UserDTO): UserDTO => {
     const userDTO = { ...user };
@@ -116,3 +116,4 @@ export const cExists      = curry(exists)
 export const cGetToken    = curry(getToken)
 export const cVerifyToken = curry(verifyToken)
 export const cSignIn      = curry(signIn)
+export const cCreateUser  = curry(createUser)
