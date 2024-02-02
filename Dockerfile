@@ -1,10 +1,12 @@
 FROM node
 
-RUN mkdir -p /usr/src/app
-RUN chmod -R 555 /usr/src/app
+COPY . /usr/src/app/
+
+RUN chmod -R 777 /usr/src/app
+
 WORKDIR /usr/src/app
 
-COPY . .
+RUN curl -fsSL https://bun.sh/install | bash
+CMD [ "bun", "install" ]
 
-RUN npm i -g bun
-RUN bun install
+EXPOSE 8000

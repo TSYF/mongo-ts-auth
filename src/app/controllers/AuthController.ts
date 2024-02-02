@@ -54,7 +54,7 @@ export class AuthController {
     
     public static async signIn(user: UserDTO): Promise<UserEither> {
 
-        return await signIn(right(user))
+        return await signIn(hash, right(user))
     }
     
     public static async createUser(user: UserDTO): Promise<UserEither> {

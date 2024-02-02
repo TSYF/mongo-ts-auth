@@ -7,6 +7,21 @@ import bcrypt from "bcrypt"
 import { v4 } from "uuid";
 import { readFileSync } from "fs"
 import { UserDAO } from "../model/UserDAO"
+import mongoose from "mongoose"
+
+
+const User = mongoose.model("users", new mongoose.Schema({
+    _id: String,
+    email: String,
+    password: String,
+    image: String
+}));
+
+mongoose.connect(process.env.MONGO_CONN_STRING!);
+
+
+type HashFunction    = (data: string | Buffer, saltOrRounds: string | number) => Promise<string>;
+type JWTSignFunction = (payload: string | Buffer | object, key: Secret, options?: SignOptions) => string;
 
 export type TokenEither = Either<string, string>
 export type UserEither = Either<string, UserDTO>
@@ -44,13 +59,20 @@ export const verifyToken: VerifyToken = (header) => match(
 )(header)
 
 
-type SignIn = (user: UserEither) => Promise<UserEither>
-export const signIn: SignIn = (user) => match(
+type SignIn = (hash: HashFunction, user: UserEither) => Promise<UserEither>
+export const signIn: SignIn = (hash, user) => match(
     async (value: string) => left(value),
     async (value: UserDTO) => {
         try {
 
-            const { email, image } = user;
+            const { email, image, password } = value;
+            
+            const pass = await User.find(mongoose.sanitizeFilter({
+                email
+            })).then(res => res!.at(0)!.password);
+
+            if (await hash(password!, 10) !== pass) return left("Invalid password");
+            
             const key = readFileSync("../../src/keys/jwtRS256.key", "utf8");
             const accessToken  = jwt.sign(user, key, { expiresIn: "30m", algorithm: "RS256" });
             const refreshToken = jwt.sign(user, key, { expiresIn: "3h", algorithm: "RS256" });
@@ -68,8 +90,6 @@ export const signIn: SignIn = (user) => match(
     }
 )(user)
 
-type HashFunction    = (data: string | Buffer, saltOrRounds: string | number) => Promise<string>;
-type JWTSignFunction = (payload: string | Buffer | object, key: Secret, options?: SignOptions) => string;
 type CreateUser = (sign: JWTSignFunction, hash: HashFunction, user: UserEither) => Promise<UserEither>
 export const createUser: CreateUser = (sign, hash, user) => match(
     async (value: string) => left(value),
