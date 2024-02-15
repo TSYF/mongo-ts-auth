@@ -50,8 +50,8 @@ export const verifyToken: VerifyToken = (header) => match(
     async (value: string) => {
         try {
             const key = readFileSync("../../keys/jwtRS256.key.pub", "utf8");
-            const { uid, email } = <UserDTO>jwt.verify(value, key, { algorithms: ["RS256"] });
-            return right(new UserDTO(uid, email));
+            const { _id, email } = <UserDTO>jwt.verify(value, key, { algorithms: ["RS256"] });
+            return right(new UserDTO(_id, email));
         } catch ({ message }) {
             return left(message);
         }
@@ -65,7 +65,7 @@ export const signIn: SignIn = (hash, user) => match(
     async (value: UserDTO) => {
         try {
 
-            const { email, image, password } = value;
+            const { email, password } = value;
             
             const pass = await User.find(mongoose.sanitizeFilter({
                 email
@@ -80,7 +80,7 @@ export const signIn: SignIn = (hash, user) => match(
             const returnedUser = compose(
                 buildUser("refreshToken", refreshToken),
                 buildUser("accessToken", accessToken),
-                buildUser("image", image),
+                // buildUser("image", image),
                 buildUser("email", email)
             )(new UserDTO());
             return right(returnedUser);
@@ -96,9 +96,9 @@ export const createUser: CreateUser = (sign, hash, user) => match(
     async (user: UserDTO) => {
         try {
             // const { user: signedUser } = await createUserWithEmailAndPassword(auth, value.email!, value.password!);
-            // const { uid, email, getIdToken, refreshToken } = signedUser;
+            // const { _id, email, getIdToken, refreshToken } = signedUser;
 
-            user.uid = v4();
+            user._id = v4();
             const { email, image } = user;
 
             user.password = await hash(user.password!, 10);
@@ -116,7 +116,7 @@ export const createUser: CreateUser = (sign, hash, user) => match(
                 buildUser("accessToken", accessToken),
                 buildUser("image", image!),
                 buildUser("email", email!),
-                buildUser("uid", user.uid),
+                buildUser("_id", user._id),
             )(new UserDTO());
             return right(userDTO);
         } catch ({message }) {
